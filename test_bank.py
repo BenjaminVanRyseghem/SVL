@@ -12,21 +12,39 @@ from mockito import times
     
 class TestJohnCrediteSonCompte(unittest.TestCase):
         
+    def setUp(self):
+        self.storage = mock()
+        self.account = Account(self.storage)
+
+            
+    
     def test_credit_du_compte_positivement(self):
         """Test l'accreditement d'un compte"""
-        storage = mock()
-        account = Account(storage)
+
         amount = 100
-        account.credit(amount)
-        verify(storage).insert(amount)
+        self.account.credit(amount)
+        verify(self.storage).insert(amount)
+        
+    def test_historique(self):
+        when(self.storage).select().thenReturn([])
+        history = self.account.historique()
+        self.assertEquals(history, self.account.operations)
+        
+    def test_can_accept_credit_valeur_positive(self):
+        """Test si un compte accepte un credit sur valeur positive"""
+        amount = 1
+        self.assertTrue(self.account.can_accept_credit(amount))
+        
+    def test_can_accept_credit_valeur_negative(self):
+        """Test si un compte accepte un credit sur valeur negative"""
+        amount = -1
+        self.assertFalse(self.account.can_accept_credit(amount))
     
     def test_credit_du_compte_negativement(self):
         """Test l'accreditement d'un compte negativement"""
         
-        storage = mock()
-        account = Account(storage)
         amount = -10
-        self.assertRaises(ValueError, account.credit, amount)
+        self.assertRaises(ValueError, self.account.credit, amount)
 
 class TestJohnDebiteSonCompte(unittest.TestCase):
         
@@ -40,11 +58,12 @@ class TestJohnDebiteSonCompte(unittest.TestCase):
         account.debit(amount)
         verify(storage).insert(-amount)
         
-    def _test_debit_sur_solde_negatif(self): 
-        """Test le debit quand le solde est deja negatif""" 
+    def test_debit_sur_solde_insuffisant(self): 
+        """Test le debit quand le solde est insuffisant""" 
         storage = mock()
+        when(storage).select().thenReturn([])
         account = Account(storage)
-        amount = -100
+        amount = 11
         self.assertRaises(ValueError, account.debit, amount)
         
     def test_debit_du_compte_negativement(self):

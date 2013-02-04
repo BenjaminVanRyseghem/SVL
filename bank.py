@@ -4,13 +4,13 @@ class Account(object):
         self.operations = storage
         
     def historique(self):
-        return list(self.operations.select())
+        return self.operations
             
     def balance(self):
         """Retourne le solde courant du compte
         """
         return sum(self.operations.select())
-        
+        11
     def _negative_value_raises_an_error(self,value):    
         if not self.can_accept_credit(value):
             raise ValueError("The value should be positive. You have provided {0}".format(value))    
