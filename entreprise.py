@@ -23,7 +23,6 @@ class ServiceCommande(object):
         commande = self.fabrique.nouvelle_commande(createur, date, devis)   
         self.commandes.append(commande)
         
-        
 class Devis(object):
     
     def __init__(self, prestations, storage):
@@ -31,17 +30,12 @@ class Devis(object):
         self.storage = storage
 
     def addPrestation(self, prestation):
-        if not prestation.exists():
-            raise PrestationInconnue
         if self.storage.includes(self):
             raise DevisFinalise
         self.prestations.append(prestation)
         
-    def buildPDF(self):
-        string = "Devis"
-        for prestation in self.prestations.select():
-            string += "\n"+prestation.description()+ " - CU: "+ str(prestation.cout_unitaire())+"euros"
-        return string
+    def buildPDF(self, lib):
+        return lib.build_output_for(self)
     
     def computeTotalHT(self):
         total = 0
@@ -49,17 +43,24 @@ class Devis(object):
             total += prestation.coutHT()
         return total
         
-    def _tauxTTC(self):
-        return 1.2
-        
-    def computeTotalTTC(self):
+    def computeTotalTTC(self, taux):
         total = 0
+        ratio = 1.0+(taux/100)
         for prestation in self.prestations.select():
             total += prestation.coutHT()
-        return total * self._tauxTTC()
+        return total * ratio
         
     def store(self):
+        if self.storage.includes(self):
+            raise DevisFinalise
         self.storage.insert(self)
+        
+    def change_number_of_to(self, prestation, quantity):
+        if not self.prestations.includes(prestation):
+            raise PrestationInconnue
+        if self.storage.includes(self):
+            raise DevisFinalise            
+        self.prestations.set_number_of_to(prestation, quantity)
         
 class DevisInvalide(Exception):
     pass
